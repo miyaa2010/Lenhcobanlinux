@@ -1,0 +1,6 @@
+Giảm lượng RAM mỗi process sử dụng & Xác định các process đang sử dụng Swap Đặc điểm của Apache, Nginx hoặc PHP … khi chạy sẽ sinh ra rất nhiều process để handle request. Trong trường hợp mỗi process sinh ra sử dụng nhiều RAM sẽ nhanh chóng làm server hết RAM và ảnh hưởng hiệu suất. Để giảm lượng RAM sử dụng của mỗi process, cần xác định với mỗi process RAM đang được phân bố ra sao. Ví dụ Process cần phân tích là httpd có PID 26304 [root@server ~]# pmap -x 26304 26304: /usr/sbin/httpd -k start Address Kbytes RSS Dirty Mode Mapping 00002b1aefa2c000 128 28 0 r-x-- ld-2.12.so total kB 320388 92284 89276 Dựa vào kết quả trên, có thể thấy mỗi process httpd đang load rất nhiều module và mỗi module chiếm một số lượng RAM nhất định. Để tối ưu, cần tắt bớt các module không dùng để giảm lượng RAM cho mỗi process httpd được sinh ra.
+
+Trường hợp máy chủ hết RAM và hệ thống đang dùng tới swap, cần kiểm tra xem các process nào bị ảnh hưởng (process nào đang phải sử dụng swap):
+$ for file in /proc/*/status ; do awk '/VmSwap|Name/{printf $2 " " $3}END{ print ""}' $file; done | sort -k 2 -n -r | less
+
+Lệnh trên sẽ liệt kê danh sách các process đang phải sử dụng swap và lượng bộ nhớ sử dụng tương ứng được sắp xếp theo thứ tự giảm dần.
